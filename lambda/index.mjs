@@ -6,14 +6,9 @@ dotenv.config();
 
 export const handler = async (event) => {
     // If event is from HTTP request
-    console.log(event);
     let data = event;
     if (event.body){
-      console.log(event.body);
-      console.log(Object.keys(event.body));
-      console.log(typeof event.body);
       data = JSON.parse(event.body);
-      console.log(typeof data);
     }
     const responseHeaders = {
       'Content-Type':'application/json'
@@ -22,8 +17,6 @@ export const handler = async (event) => {
     const start = data.start; // Number update to start at. 1 <= start <= updates.length
     const count = data.count;  // Number of updates to display. 1 <= count
     const apiKey = process.env.MONDAY_API_KEY;  // Replace with your actual API key
-    console.log(data);
-    console.log(start, count);
 
     const query = `query { boards (ids: ${boardId}) {updates{id created_at body creator{name}}}}`;
     let updates = [];
@@ -38,16 +31,12 @@ export const handler = async (event) => {
             body: JSON.stringify({ query })
         });
 
-        console.log(response);
-
-
         assert.equal(typeof start, 'number', "Start must be a number");
         assert.equal(typeof count, 'number', "Count must be a number");
         assert(start > 0, "Start must be a positive number greater than 0");
         assert(count > 0, "Count must be a positive number greater than 0");
 
         const data = await response.json();
-        console.log(data);
         updates = getUniqueUpdatesById(data.data.boards[0].updates);
 
         // Process and return the first 5 updates
@@ -62,10 +51,7 @@ export const handler = async (event) => {
         return {
             statusCode: 500,
             headers: responseHeaders,
-            body: JSON.stringify({
-              err: JSON.stringify(error),
-              input: JSON.stringify(event)
-            })
+            body: JSON.stringify(error)
         };
     }
 
