@@ -1,3 +1,5 @@
+// This file is for locally testing your html code with the deployed lambda server   
+
 const express = require('express');
 const app = express();
 const port = 3000; // You can choose any port number

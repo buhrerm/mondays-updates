@@ -1,3 +1,6 @@
+// This file is for locally testing your lambda function
+
+
 import { handler } from './index.mjs';
 
 async function test() {

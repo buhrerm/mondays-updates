@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL API Response</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .updates-section {
+          position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+
+        }
+
+        .updates-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* This will make it one column */
+            grid-gap: 20px;
+        }
+
+        .update-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .update-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .update-date {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .update-info, .update-title, .update-date {
+            color: black; /* Setting text color to black */
+        }
+
+        .update-body {
+            font-size: 16px;
+            max-height: 100px; /* Set a maximum height */
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            color: black; /* Text color for update body */
+        }
+
+        .expandable.expanded {
+            max-height: none;
+        }
+
+        .read-more {
+            font-size: 14px; /* Smaller text size */
+            color: grey; /* Text color changed to white */
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .read-more:hover {
+            color: #f2f2f2;
+        }
+
+        /* Responsive Grid */
+        @media (max-width: 600px) {
+            .updates-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* PAgination */
+
+.updates-section {
+    position: relative;
+    /* Other styles for the updates-section */
+}
+
+.prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10; /* Ensure the arrows are above other content */
+}
+
+.prev {
+    left: 0; /* Align to the left side of the updates section */
+}
+
+.next {
+    right: 0; /* Align to the right side of the updates section */
+}
+
+
+    </style>
+</head>
+<body>
+  <section class="updates-section">
+      <div class="updates-grid" id="text-block-container"></div>
+      <!-- Inherit squarespace styling for next / previous arrow -->
+      <div class="sqs-gallery-controls show-hover-effect">
+          <a tabindex="0" role="button" class="previous" aria-label="Previous Slide" onclick="changePage(-1)"></a>
+          <a tabindex="0" role="button" class="next" aria-label="Next Slide" onclick="changePage(1)"></a>
+      </div>
+    </div>
+  </section>
+
+    <script>
+    const BOARD_ID = 4172979215;
+    const UPDATES_PER_PAGE = 3;
+
+        let updates = [];
+        let currentPage = 1;
+
+        function changePage(change) {
+            currentPage += change;
+            // Handle Paging too far back
+            if (currentPage < 1) {
+              currentPage = 1;
+            }
+            loadData();
+        }
+
+        function loadData(){
+          fetch('https://strqjnwqqqzwkkf7ppkdqgcv440nnwfo.lambda-url.us-east-2.on.aws/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                "boardId": BOARD_ID,
+                "start": 1 +(currentPage - 1) * UPDATES_PER_PAGE,
+                "count": UPDATES_PER_PAGE
+              })
+          })
+          .then(response => {
+              if (response.status === 500) {
+                  // Handle 500 Internal Server Error
+                  console.error('Server error: 500 Internal Server Error');
+                  // You can add more error handling logic here
+              } else {
+                  return response.json();
+              }
+          })
+          .then(data => {
+              updates = getUniqueUpdatesById(data);
+              displayUpdates();
+          })
+          .catch(error => console.error(error));
+        }
+
+        function getUniqueUpdatesById(updates) {
+            const seenIds = new Set();
+            return updates.filter(update => {
+                if (seenIds.has(update.created_at)) {
+                    return false;
+                }
+                seenIds.add(update.created_at);
+                return true;
+            });
+        }
+
+        function displayUpdates() {
+          const textBlockContainer = document.getElementById("text-block-container");
+          textBlockContainer.innerHTML = ''; // Clear existing content
+
+          updates.forEach((update, index) => {
+              const isLongUpdate = update.body.length > 300 || update.body.includes('<img');
+              let updateBody = update.body;
+
+              // Correcting the malformed img tag
+              updateBody = updateBody.replace(/<img alt="([^"]+)" src="<img src=" https?:="" ([^"]+)"="">/g, (match, altText, urlPart) => {
+                  let url = 'https://' + urlPart.replace(/=/g, ''); // Removing '=' from the URL part
+                  return `<img alt="${altText}" src="${url}">`;
+              });
+
+              const updateElement = `
+              <div class="update-card">
+                  <h3 class="update-title">${update.creator_name}</h3>
+                  <p class="update-date">${new Date(update.created_at).toLocaleDateString()}</p>
+                  <div class="update-body${isLongUpdate ? ' expandable' : ''}" ${index === 0 && isLongUpdate ? 'style="max-height: none;"' : ''}>
+                      ${updateBody} <!-- Using innerHTML to render HTML content -->
+                  </div>
+                  ${isLongUpdate ? '<div class="read-more" onclick="toggleExpand(this)">' + (index === 0 ? 'Collapse' : 'Read More') + '</div>' : ''}
+              </div>`;
+              textBlockContainer.innerHTML += updateElement;
+          });
+      }
+
+        function toggleExpand(element) {
+            const textBlock = element.parentElement;
+            const updateBody = textBlock.querySelector('.update-body');
+            updateBody.classList.toggle('expanded');
+            element.innerText = updateBody.classList.contains('expanded') ? 'Collapse' : 'Read More';
+        }
+        loadData();
+    </script>
+
+
+</body>
+</html>
