@@ -11,10 +11,11 @@
         }
 
         .updates-section {
-            position: relative;
+          position: relative;
             max-width: 100%;
             margin: 0 auto;
             padding: 10px;
+
         }
 
         .updates-grid {
@@ -22,8 +23,6 @@
             grid-template-columns: 1fr; /* This will make it one column */
             grid-gap: 20px;
             margin-bottom: 20px;
-            max-height: 780px; /* Set a fixed height for the grid */
-            overflow-y: auto; /* Enable vertical scrolling */
         }
 
         .update-card {
@@ -109,25 +108,23 @@
 <body>
   <section class="updates-section">
       <div class="updates-grid" id="text-block-container"></div>
+      <button class="load-more-button" id="loadMore" onclick="loadMoreContent(1)">Load More</button>
     </div>
   </section>
 
     <script>
     const BOARD_ID = 4172979215;
-    const UPDATES_PER_PAGE = 10;
+    const UPDATES_PER_PAGE = 3;
 
         let updates = [];
         let currentPage = 1;
 
-        document.getElementById("text-block-container").addEventListener('scroll', function() {
-            var container = this;
-            if (container.scrollTop + container.clientHeight + 10 >= container.scrollHeight) {
-                // We've reached the bottom
-                loadMoreContent(1);
-            }
-        });
-
         function loadMoreContent(change) {
+          const loadMoreButton = document.getElementById('loadMore');
+
+          // Optionally disable button during load
+          loadMoreButton.disabled = true;
+          loadMoreButton.textContent = 'Loading...';
             currentPage += change;
             loadData();
         }
@@ -149,6 +146,8 @@
               newUpdates = getUniqueUpdatesById(data);
               updates.push(...newUpdates);
               displayUpdates();
+              updatePageIndicator();
+              // checkButtonVisibility();
           })
           .catch(error => console.error(error));
         }
@@ -190,6 +189,8 @@
               </div>`;
               textBlockContainer.innerHTML += updateElement;
           });
+          loadMoreButton.disabled = false;
+          loadMoreButton.textContent = 'Load More';
       }
 
         function toggleExpand(element) {
@@ -197,11 +198,6 @@
             const updateBody = textBlock.querySelector('.update-body');
             updateBody.classList.toggle('expanded');
             element.innerText = updateBody.classList.contains('expanded') ? 'Collapse' : 'Read More';
-        }
-
-        function updatePageIndicator() {
-            const pageIndicator = document.getElementById('page-indicator');
-            pageIndicator.innerText = `Page ${currentPage}`;
         }
 
         function checkButtonVisibility() {
