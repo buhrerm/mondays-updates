@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Widget from Lambda</title>
+    <style>
+        /* Simple CSS for the loading spinner */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div class="loader" id="loader"></div> <!-- Loading spinner -->
+    </div>
+    <script>
+      window.onload = function() {
+        loadWidget();
+         };
+         const ITEM_ID = 5371574991;
+         const HEIGHT = 750;
+
+        // Function to call the Lambda function
+        function loadWidget() {
+            fetch('https://scqmx3udyfgdciou22lqotvafq0alwyl.lambda-url.us-east-2.on.aws/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/html'
+                },
+                body: JSON.stringify({
+                  "itemId": ITEM_ID,
+                  "height": HEIGHT
+                })
+            })
+                .then(response => response.text()) // Expecting a text response (HTML)
+                .then(html => {
+                    document.getElementById('content').innerHTML = html;
+                })
+                .catch(error => {
+                   console.error('Error:', error);
+                   document.getElementById('content').innerHTML = '<p>Error loading content.</p>';
+               });
+        }
+          function toggleExpand(element) {
+              const textBlock = element.parentElement;
+              const updateBody = textBlock.querySelector('.update-body');
+              updateBody.classList.toggle('expanded');
+              element.innerText = updateBody.classList.contains('expanded') ? 'Collapse' : 'Read More';
+          }
+    </script>
+</body>
+</html>

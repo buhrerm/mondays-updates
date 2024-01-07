@@ -13,12 +13,24 @@ export const handler = async (event) => {
     const responseHeaders = {
       'Content-Type':'application/json'
     }
-    const boardId = data.boardId;  // Assuming boardId is passed in the event
+    const itemId = data.itemId;  // Assuming itemId is passed in the event
     const start = data.start; // Number update to start at. 1 <= start <= updates.length
     const count = data.count;  // Number of updates to display. 1 <= count
     const apiKey = process.env.MONDAY_API_KEY;  // Replace with your actual API key
 
-    const query = `query { boards (ids: ${boardId}) {updates{id created_at body creator{name}}}}`;
+    const query = `query items {
+      items(ids: [${itemId}]) {
+        name
+        updates{
+          id
+          created_at
+          body
+          creator{
+            name
+          }
+        }
+      }
+    }`;
     let updates = [];
 
     try {
